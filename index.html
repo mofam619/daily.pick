@@ -40,11 +40,15 @@
                'UEFA Champions League','UEFA Europa League','FIFA World Cup','UEFA European Championship',
                'Copa América','Africa Cup of Nations'];
 
-  async function getDay(date){
+async function getDay(date){
   try{
-    const res=await fetch(`https://www.thesportsdb.com/api/v1/json/50130162/eventsround.php?id=4328&r=1&s=${date}`);
+    const res=await fetch(`https://www.thesportsdb.com/api/v1/json/3/eventsday.php?d=${date}&s=Soccer`);
     const data=await res.json();
-    return (data.events||[]).filter(m=>m.strLeague==='English Premier League');
+    const all=data.events||[];
+    const BIG=['English Premier League','La Liga','Serie A','Bundesliga','Ligue 1',
+               'UEFA Champions League','UEFA Europa League','FIFA World Cup','UEFA European Championship',
+               'Copa América','Africa Cup of Nations'];
+    return all.map(m=>({...m,isBig:BIG.includes(m.strLeague||'')}));
   }catch{return[];}
 }
     function mockOdds(h,a){
@@ -73,7 +77,8 @@
         else{
           for(const lg of leagueOrder){
             const lid=lg.replace(/\W+/g,'_')+'_'+d;
-            html+=`<div class="league"><div class="league-head" onclick="toggle('${lid}')"><span>${lg}</span><span>${byLeague[lg].length} matches</span></div><div id="${lid}" class="matches">`;
+         const badge=byLeague[lg][0]?.isBig?'🏆 ':'';   // first match flag is enough
+html+=`<div class="league-head" onclick="toggle('${lid}')"><span>${badge}${lg}</span><span>${byLeague[lg].length} matches</span></div>`;<div id="${lid}" class="matches">`;
             for(const m of byLeague[lg]){
               const mid=m.idEvent;
               const o=mockOdds(m.strHomeTeam,m.strAwayTeam);
