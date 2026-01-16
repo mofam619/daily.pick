@@ -40,13 +40,13 @@
                'UEFA Champions League','UEFA Europa League','FIFA World Cup','UEFA European Championship',
                'Copa América','Africa Cup of Nations'];
 
-    async function getDay(date){
-      try{
-        const res=await fetch(`https://www.thesportsdb.com/api/v1/json/3/eventsday.php?d=${date}&s=Soccer`);
-        const data=await res.json();
-        return (data.events||[]).filter(m=>BIG.includes(m.strLeague||''));
-      }catch{return[];}
-    }
+  async function getDay(date){
+  try{
+    const res=await fetch(`https://www.thesportsdb.com/api/v1/json/50130162/eventsround.php?id=4328&r=1&s=${date}`);
+    const data=await res.json();
+    return (data.events||[]).filter(m=>m.strLeague==='English Premier League');
+  }catch{return[];}
+}
     function mockOdds(h,a){
       const hLen=h.length,aLen=a.length;
       return{
