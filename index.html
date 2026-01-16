@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Big-League Bet Builder</title>
+  <meta name="theme-color" content="#004d00">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+    body{background:#0a0a0a;color:#eee;padding:8px}
+    h1{text-align:center;margin:12px 0 8px;font-size:1.3rem;font-weight:600}
+    .day{margin-bottom:16px;border-radius:6px;overflow:hidden;background:#1c1c1e}
+    .day-head{background:#004d00;padding:8px 12px;font-size:1rem;font-weight:600}
+    .league{margin-bottom:4px}
+    .league-head{background:#2c2c2e;padding:6px 10px;font-size:.95rem;font-weight:500;display:flex;justify-content:space-between;cursor:pointer}
+    .league-head span:last-child{font-size:.8rem;opacity:.7}
+    .matches{display:none}
+    .match{background:#333;margin:2px 0;padding:8px 10px;cursor:pointer;border-left:3px solid #555}
+    .match:hover{background:#3a3a3c}
+    .teams{font-size:.95rem}
+    .time{font-size:.75rem;opacity:.7}
+    .builder{display:none;margin-top:8px;font-size:.82rem}
+    .bb-row{display:flex;justify-content:space-between;align-items:center;background:#2c2c2e;margin:3px 0;padding:6px;border-radius:3px}
+    .bb-label{color:#ccc}.bb-odd{font-weight:600}
+    .safe{color:#32d74b}.med{color:#ffcc00}.risk{color:#ff3b30}
+    #noGames{text-align:center;margin-top:40px;opacity:.6}
+  </style>
+</head>
+<body>
+  <h1>Big-League Bet Builder</h1>
+  <div id="root">Loading…</div>
+
+  <script>
+    const root=document.getElementById('root');
+    const dates=[...Array(7).keys()].map(d=>{
+      const dt=new Date();dt.setDate(dt.getDate()+d);
+      return dt.toISOString().split('T')[0];
+    });
+    const BIG=['English Premier League','La Liga','Serie A','Bundesliga','Ligue 1',
+               'UEFA Champions League','UEFA Europa League','FIFA World Cup','UEFA European Championship',
+               'Copa América','Africa Cup of Nations'];
+    
+    async function getDay(date){
+      try{
+        const res=await fetch(`https://www.thesportsdb.com/api/v1/json/3/eventsday.php?d=${date}&s=Soccer`);
+        const data=await res.json();
+        return (data.events||[]).filter(m=>BIG.includes(m.strLeague||''));
+      }catch{return[];}
+    }
+    function mockOdds(h,a){
+      const hLen=h.length,aLen=a.length;
+      return{
+        home:1.45+(hLen%6)*.08, draw:3.4, away:2.35+(aLen%6)*.08,
+        bttsY:1.78,bttsN:1.92,
+        over25:1.80,under25:1.98,
+        homeO05:1.28,homeU05:3.4,
+        awayO05:1.30,awayU05:3.2
+      };
+    }
+    function render(){
+      let html='';let total=0;
+      for(const d of dates){
+        const day=d;
+        const list=cache[day]||[];total+=list.length;
+        const byLeague={};
+        for(const m of list){
+          const l=m.strLeague||'Other';
+          (byLeague[l]=byLeague[l]||[]).push(m);
+        }
+        const leagueOrder=Object.keys(byLeague).sort((a,b)=>BIG.indexOf(a)-BIG.indexOf(b));
+        html+=`<div class="day">
+                 <div class="day-head">${new Date(d+'T00:00').toDateString()}</div>`;
+        if(list.length===0)html+=`<div class="match">No big-league games</div>`;
+        else{
+          for(const lg of leagueOrder){
+            const lid=lg.replace(/\W+/g,'_')+'_'+d;
+            html+=`<div class="league">
+                     <div class="league-head" onclick="toggle('${lid}')">
+                       <span>${lg}</span><span>${byLeague[lg].length} matches</span>
+                     </div>
+                     <div id="${lid}" class="matches">`;
+            for(const m of byLeague[lg]){
+              const mid=m.idEvent;
+              const o=mockOdds(m.strHomeTeam,m.strAwayTeam);
+              html+=`<div class="match" onclick="toggle('${mid}')">
+                       <div class="teams">${m.strHomeTeam} vs ${m.strAwayTeam}</div>
+                       <div class="time">${m.strTime||''} UTC</div>
+                       <div id="${mid}" class="builder">
+                         <div class="bb-row"><span class="bb-label">Home Win</span><span class="bb-odd safe">${o.home.toFixed(2)}</span></div>
+                         <div class="bb-row"><span class="bb-label">Draw</span><span class="bb-odd med">${o.draw.toFixed(2)}</span></div>
+                         <div class="bb-row"><span class="bb-label">Away Win</span><span class="bb-odd risk">${o.away.toFixed(2)}</span></div>
+                         <div class="bb-row"><span class="bb-label">BTTS Yes</span><span class="bb-odd">${o.bttsY.toFixed(2)}</span></div>
+                         <div class="bb-row"><span class="bb-label">BTTS No</span><span class="bb-odd">${o.bttsN.toFixed(2)}</span></div>
+                         <div class="bb-row"><span class="bb-label">Over 2.5</span><span class="bb-odd">${o.over25.toFixed(2)}</span></div>
+                         <div class="bb-row"><span class="bb-label">Under 2.5</span><span class="bb-odd">${o.under25.toFixed(2)}</span></div>
+                         <div class="bb-row"><span class="bb-label">Home &gt;0.5</span><span class="bb-odd">${o.homeO05.toFixed(2)}</span></div>
+                         <div class="bb-row"><span class="bb-label">Away &gt;0.5</span><span class="bb-odd">${o.awayO05.toFixed(2)}</span></div>
+                       </div>
+                     </div>`;
+            }
+            html+=`</div></div>`;
+          }
+        }
+        html+=`</div>`;
+      }
+      root.innerHTML=total?html:'<div id="noGames">No big-league fixtures this week</div>';
+    }
+    function toggle(id){
+      const el=document.getElementById(id);
+      if(!el)return;
+      el.style.display=el.style.display==='block'?'none':'block';
+    }
+    const cache={};
+    (async()=>{
+      for(const d of dates)cache[d]=await getDay(d);
+      render();
+    })();
+  </script>
+</body>
+</html>
