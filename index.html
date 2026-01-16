@@ -39,7 +39,7 @@
     const BIG=['English Premier League','La Liga','Serie A','Bundesliga','Ligue 1',
                'UEFA Champions League','UEFA Europa League','FIFA World Cup','UEFA European Championship',
                'Copa América','Africa Cup of Nations'];
-    
+
     async function getDay(date){
       try{
         const res=await fetch(`https://www.thesportsdb.com/api/v1/json/3/eventsday.php?d=${date}&s=Soccer`);
@@ -68,35 +68,26 @@
           (byLeague[l]=byLeague[l]||[]).push(m);
         }
         const leagueOrder=Object.keys(byLeague).sort((a,b)=>BIG.indexOf(a)-BIG.indexOf(b));
-        html+=`<div class="day">
-                 <div class="day-head">${new Date(d+'T00:00').toDateString()}</div>`;
+        html+=`<div class="day"><div class="day-head">${new Date(d+'T00:00').toDateString()}</div>`;
         if(list.length===0)html+=`<div class="match">No big-league games</div>`;
         else{
           for(const lg of leagueOrder){
             const lid=lg.replace(/\W+/g,'_')+'_'+d;
-            html+=`<div class="league">
-                     <div class="league-head" onclick="toggle('${lid}')">
-                       <span>${lg}</span><span>${byLeague[lg].length} matches</span>
-                     </div>
-                     <div id="${lid}" class="matches">`;
+            html+=`<div class="league"><div class="league-head" onclick="toggle('${lid}')"><span>${lg}</span><span>${byLeague[lg].length} matches</span></div><div id="${lid}" class="matches">`;
             for(const m of byLeague[lg]){
               const mid=m.idEvent;
               const o=mockOdds(m.strHomeTeam,m.strAwayTeam);
-              html+=`<div class="match" onclick="toggle('${mid}')">
-                       <div class="teams">${m.strHomeTeam} vs ${m.strAwayTeam}</div>
-                       <div class="time">${m.strTime||''} UTC</div>
-                       <div id="${mid}" class="builder">
-                         <div class="bb-row"><span class="bb-label">Home Win</span><span class="bb-odd safe">${o.home.toFixed(2)}</span></div>
-                         <div class="bb-row"><span class="bb-label">Draw</span><span class="bb-odd med">${o.draw.toFixed(2)}</span></div>
-                         <div class="bb-row"><span class="bb-label">Away Win</span><span class="bb-odd risk">${o.away.toFixed(2)}</span></div>
-                         <div class="bb-row"><span class="bb-label">BTTS Yes</span><span class="bb-odd">${o.bttsY.toFixed(2)}</span></div>
-                         <div class="bb-row"><span class="bb-label">BTTS No</span><span class="bb-odd">${o.bttsN.toFixed(2)}</span></div>
-                         <div class="bb-row"><span class="bb-label">Over 2.5</span><span class="bb-odd">${o.over25.toFixed(2)}</span></div>
-                         <div class="bb-row"><span class="bb-label">Under 2.5</span><span class="bb-odd">${o.under25.toFixed(2)}</span></div>
-                         <div class="bb-row"><span class="bb-label">Home &gt;0.5</span><span class="bb-odd">${o.homeO05.toFixed(2)}</span></div>
-                         <div class="bb-row"><span class="bb-label">Away &gt;0.5</span><span class="bb-odd">${o.awayO05.toFixed(2)}</span></div>
-                       </div>
-                     </div>`;
+              html+=`<div class="match" onclick="toggle('${mid}')"><div class="teams">${m.strHomeTeam} vs ${m.strAwayTeam}</div><div class="time">${m.strTime||''} UTC</div><div id="${mid}" class="builder">
+                <div class="bb-row"><span class="bb-label">Home Win</span><span class="bb-odd safe">${o.home.toFixed(2)}</span></div>
+                <div class="bb-row"><span class="bb-label">Draw</span><span class="bb-odd med">${o.draw.toFixed(2)}</span></div>
+                <div class="bb-row"><span class="bb-label">Away Win</span><span class="bb-odd risk">${o.away.toFixed(2)}</span></div>
+                <div class="bb-row"><span class="bb-label">BTTS Yes</span><span class="bb-odd">${o.bttsY.toFixed(2)}</span></div>
+                <div class="bb-row"><span class="bb-label">BTTS No</span><span class="bb-odd">${o.bttsN.toFixed(2)}</span></div>
+                <div class="bb-row"><span class="bb-label">Over 2.5</span><span class="bb-odd">${o.over25.toFixed(2)}</span></div>
+                <div class="bb-row"><span class="bb-label">Under 2.5</span><span class="bb-odd">${o.under25.toFixed(2)}</span></div>
+                <div class="bb-row"><span class="bb-label">Home &gt;0.5</span><span class="bb-odd">${o.homeO05.toFixed(2)}</span></div>
+                <div class="bb-row"><span class="bb-label">Away &gt;0.5</span><span class="bb-odd">${o.awayO05.toFixed(2)}</span></div>
+              </div></div>`;
             }
             html+=`</div></div>`;
           }
@@ -107,8 +98,7 @@
     }
     function toggle(id){
       const el=document.getElementById(id);
-      if(!el)return;
-      el.style.display=el.style.display==='block'?'none':'block';
+      if(el)el.style.display=el.style.display==='block'?'none':'block';
     }
     const cache={};
     (async()=>{
